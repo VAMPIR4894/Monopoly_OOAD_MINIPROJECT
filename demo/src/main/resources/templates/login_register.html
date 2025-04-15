@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Login/Register</title>
+	<link rel="stylesheet" th:href="@{/styles.css}" />
+	<style>
+		/* ...existing styles... */
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="tabs">
+			<div class="tab active" id="login-tab">Login</div>
+			<div class="tab" id="register-tab">Register</div>
+		</div>
+		<div class="form active" id="login-form">
+			<h1>Login</h1>
+			<form th:action="@{/login}" method="post">
+				<input type="text" id="login-username" name="username" placeholder="Email address" required>
+				<input type="password" id="login-password" name="password" placeholder="Password" required>
+				<input type="submit" value="Sign in">
+			</form>
+		</div>
+		<div class="form" id="register-form">
+			<h1>Register</h1>
+			<form th:action="@{/register}" method="post">
+				<input type="text" id="register-username" name="username" placeholder="Email address" required>
+				<input type="password" id="register-password" name="password" placeholder="Password" required>
+				<input type="password" id="register-confirm-password" name="confirm_password" placeholder="Confirm Password" required>
+				<input type="submit" value="Register">
+			</form>
+		</div>
+	</div>
+	<script>
+		// ...existing JavaScript code...
+	</script>
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Login/Register</title>
+	<link rel="stylesheet" type="text/css" href="styles.css" />
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--primary-color: #4CAF50;
+			--primary-hover: #45a049;
+			--text-color: #333;
+			--light-bg: #f8f9fa;
+			--border-color: #e0e0e0;
+			--shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+			--transition: all 0.3s ease;
+		}
+		
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+		
+		body {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			min-height: 100vh;
+			margin: 0;
+			background: url('images/login.png') no-repeat center center fixed;
+			background-size: cover;
+			color: var(--text-color);
+			font-family: 'Poppins', sans-serif;
+			padding: 20px;
+			position: relative;
+		}
+
+		body::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0, 0, 0, 0.7);
+			z-index: -1;
+		}
+		
+		.container {
+			background: rgba(255, 255, 255, 0.85);
+			padding: 2.5rem;
+			border-radius: 12px;
+			box-shadow: var(--shadow);
+			width: 100%;
+			max-width: 450px;
+			text-align: center;
+			transition: var(--transition);
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+		}
+		
+		.container:hover {
+			transform: translateY(-5px);
+			box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+		}
+		
+		.tabs {
+			display: flex;
+			justify-content: space-around;
+			margin-bottom: 2rem;
+			border-bottom: 2px solid var(--border-color);
+			position: relative;
+		}
+		
+		.tab {
+			padding: 0.8rem 1.5rem;
+			cursor: pointer;
+			font-weight: 500;
+			color: var(--text-color);
+			transition: var(--transition);
+			position: relative;
+			z-index: 1;
+		}
+		
+		.tab.active {
+			color: var(--primary-color);
+		}
+		
+		.tab.active::after {
+			content: '';
+			position: absolute;
+			bottom: -2px;
+			left: 0;
+			width: 100%;
+			height: 2px;
+			background-color: var(--primary-color);
+		}
+		
+		.form {
+			display: none;
+			opacity: 0;
+			transform: translateY(10px);
+			transition: var(--transition);
+		}
+		
+		.form.active {
+			display: block;
+			opacity: 1;
+			transform: translateY(0);
+		}
+		
+		.form h1 {
+			margin-bottom: 1.5rem;
+			color: var(--text-color);
+			font-weight: 600;
+			font-size: 1.8rem;
+		}
+		
+		.form input {
+			width: 100%;
+			margin-bottom: 1.2rem;
+			padding: 0.9rem 1rem;
+			border: 1px solid var(--border-color);
+			border-radius: 8px;
+			font-size: 1rem;
+			background-color: var(--light-bg);
+			color: var(--text-color);
+			transition: var(--transition);
+		}
+		
+		.form input:focus {
+			outline: none;
+			border-color: var(--primary-color);
+			box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+		}
+		
+		.form input[type="submit"] {
+			background-color: var(--primary-color);
+			color: white;
+			border: none;
+			cursor: pointer;
+			display: block;
+			margin: 1.5rem auto 0;
+			font-weight: 500;
+			letter-spacing: 0.5px;
+			transition: var(--transition);
+		}
+		
+		.form input[type="submit"]:hover {
+			background-color: var(--primary-hover);
+			transform: translateY(-2px);
+		}
+		
+		.form p {
+			margin-top: 1.5rem;
+			color: #666;
+		}
+		
+		.form a {
+			color: var(--primary-color);
+			text-decoration: none;
+			font-weight: 500;
+			transition: var(--transition);
+		}
+		
+		.form a:hover {
+			text-decoration: underline;
+		}
+		
+		.captcha-container {
+			margin-bottom: 1.2rem;
+			padding: 0.8rem;
+			background-color: #f0f0f0;
+			border-radius: 8px;
+			font-family: 'Courier New', monospace;
+			font-size: 1.4rem;
+			letter-spacing: 3px;
+			font-weight: 600;
+			color: #333;
+			text-shadow: 1px 1px 1px rgba(0,0,0,0.1);
+			position: relative;
+			overflow: hidden;
+		}
+		
+		.captcha-container::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.3) 50%, transparent 75%);
+			background-size: 200% 200%;
+			animation: shine 3s infinite;
+			pointer-events: none;
+		}
+		
+		@keyframes shine {
+			0% { background-position: 200% 0; }
+			100% { background-position: -200% 0; }
+		}
+		
+		.refresh-captcha {
+			background: none;
+			border: none;
+			color: var(--primary-color);
+			cursor: pointer;
+			font-size: 0.9rem;
+			margin-top: 0.5rem;
+			font-weight: 500;
+			transition: var(--transition);
+			display: flex;
+			align-items: center;
+			margin: 0.5rem auto;
+		}
+		
+		.refresh-captcha:hover {
+			color: var(--primary-hover);
+			text-decoration: underline;
+		}
+		
+		.refresh-captcha::before {
+			content: '↻';
+			margin-right: 5px;
+			font-size: 1.1rem;
+		}
+		
+		#captcha-section {
+			background-color: #f9f9f9;
+			padding: 1.2rem;
+			border-radius: 8px;
+			margin-bottom: 1.5rem;
+			border: 1px solid var(--border-color);
+		}
+		
+		@media (max-width: 480px) {
+			.container {
+				padding: 1.5rem;
+			}
+			
+			.form h1 {
+				font-size: 1.5rem;
+			}
+			
+			.tab {
+				padding: 0.6rem 1rem;
+				font-size: 0.9rem;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="tabs">
+			<div class="tab active" id="login-tab">Login</div>
+			<div class="tab" id="register-tab">Register</div>
+		</div>
+		<div class="form active" id="login-form">
+			<h1>Welcome Back</h1>
+			<form onsubmit="handleLogin(event)">
+				<input type="text" id="login-username" name="username" placeholder="Email address" required>
+				<input type="password" id="login-password" name="password" placeholder="Password" required>
+				
+				<!-- Captcha section -->
+				<div id="captcha-section">
+					<div class="captcha-container" id="captcha-display"></div>
+					<input type="text" id="captcha-input" name="captchaInput" placeholder="Enter the code above" required>
+					<button type="button" class="refresh-captcha" onclick="refreshCaptcha()">Refresh Captcha</button>
+					<input type="hidden" id="captcha-token" name="captchaToken">
+				</div>
+				
+				<input type="submit" value="Sign in">
+			</form>
+		</div>
+		<div class="form" id="register-form">
+			<h1>Create Account</h1>
+			<form onsubmit="handleRegister(event)">
+				<input type="text" id="register-username" name="username" placeholder="Email address" required>
+				<input type="password" id="register-password" name="password" placeholder="Password" required>
+				<input type="password" id="register-confirm-password" name="confirm_password" placeholder="Confirm Password" required>
+				<input type="submit" value="Register">
+			</form>
+		</div>
+	</div>
+	<script>
+		const loginTab = document.getElementById('login-tab');
+		const registerTab = document.getElementById('register-tab');
+		const loginForm = document.getElementById('login-form');
+		const registerForm = document.getElementById('register-form');
+		const captchaDisplay = document.getElementById('captcha-display');
+		const captchaTokenInput = document.getElementById('captcha-token');
+
+		// Function to fetch and display a new captcha
+		async function refreshCaptcha() {
+			try {
+				const response = await fetch("http://localhost:8080/api/captcha/generate");
+				if (response.ok) {
+					const data = await response.json();
+					captchaDisplay.textContent = data.captcha;
+					captchaTokenInput.value = data.token;
+				} else {
+					console.error("Failed to generate captcha");
+				}
+			} catch (error) {
+				console.error("Error generating captcha:", error);
+			}
+		}
+
+		// Load captcha when page loads
+		document.addEventListener('DOMContentLoaded', refreshCaptcha);
+
+		loginTab.addEventListener('click', () => {
+			loginTab.classList.add('active');
+			registerTab.classList.remove('active');
+			loginForm.classList.add('active');
+			registerForm.classList.remove('active');
+		});
+
+		registerTab.addEventListener('click', () => {
+			registerTab.classList.add('active');
+			loginTab.classList.remove('active');
+			registerForm.classList.add('active');
+			loginForm.classList.remove('active');
+		});
+
+		async function handleLogin(event) {
+			event.preventDefault();
+			const username = document.getElementById('login-username').value;
+			const password = document.getElementById('login-password').value;
+			const captchaToken = document.getElementById('captcha-token').value;
+			const captchaInput = document.getElementById('captcha-input').value;
+		
+			try {
+				const response = await fetch("http://localhost:8080/api/auth/login", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ 
+						username, 
+						password,
+						captchaToken,
+						captchaInput
+					})
+				});
+			
+				if (response.ok) {
+					const data = await response.json();
+					sessionStorage.setItem("loggedIn", "true");
+					sessionStorage.setItem("userId", data.userId);
+					sessionStorage.setItem("username", data.username);
+					window.location.href = "index.html";
+				} else {
+					const errorText = await response.text();
+					if (errorText.includes("captcha")) {
+						alert("Invalid captcha. Please try again.");
+						refreshCaptcha();
+						document.getElementById('captcha-input').value = '';
+					} else {
+						alert("Invalid username or password.");
+					}
+				}
+			} catch (error) {
+				console.error("Login error:", error);
+				alert("An error occurred during login. Please try again.");
+			}
+		}
+
+		function handleRegister(event) {
+			event.preventDefault();
+		
+			const username = document.getElementById('register-username').value;
+			const password = document.getElementById('register-password').value;
+			const confirmPassword = document.getElementById('register-confirm-password').value;
+		
+			fetch("http://localhost:8080/api/auth/register", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ username, password, confirmPassword })
+			})
+			.then(response => {
+				if (response.ok) {
+					alert("Registration successful! Please log in.");
+					window.location.href = "login_register.html";
+				} else {
+					alert("Registration failed.");
+				}
+			})
+			.catch(error => {
+				console.error("Registration error:", error);
+			});
+		}
+	</script>
+</body>
+</html>
