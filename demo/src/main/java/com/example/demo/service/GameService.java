@@ -27,7 +27,7 @@ public class GameService {
      */
     @Transactional
     public Game createGame(String gameName, User firstPlayer) {
-        Game game = new Game(gameName);
+        Game game = Game.createGame(gameName);
         game.addPlayer(firstPlayer);
         return gameRepository.save(game);
     }

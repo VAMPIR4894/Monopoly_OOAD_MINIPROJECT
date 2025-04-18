@@ -24,7 +24,7 @@ public class Game {
     private String name;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private String status; // ACTIVE, COMPLETED, ABANDONED
+    private String status; // ACTIVE, COMPLETED
     
     @ManyToMany
     @JoinTable(
@@ -33,17 +33,14 @@ public class Game {
         inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> players = new HashSet<>();
-    
-    // Default constructor
-    public Game() {
-        this.startTime = LocalDateTime.now();
-        this.status = "ACTIVE";
-    }
-    
-    // Constructor with game name
-    public Game(String name) {
-        this();
-        this.name = name;
+
+    // Simple factory method for creating games
+    public static Game createGame(String name) {
+        Game game = new Game();
+        game.setName(name);
+        game.setStartTime(LocalDateTime.now());
+        game.setStatus("ACTIVE");
+        return game;
     }
 
     // Method to add a player to the game

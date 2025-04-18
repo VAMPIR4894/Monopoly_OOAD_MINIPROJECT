@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.model.Game;
 import com.example.demo.model.User;
-import com.example.demo.service.GameService;
 import com.example.demo.service.UserServiceProxy;
+import com.example.demo.service.GameService;
 
 @RestController
 @RequestMapping("/api/game")

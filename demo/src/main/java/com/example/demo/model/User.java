@@ -18,6 +18,7 @@ public class User {
 
     private String username;
     private String password;
+    private String email;
     
     @ManyToMany(mappedBy = "players")
     private Set<Game> games = new HashSet<>();
@@ -47,11 +48,28 @@ public class User {
         this.password = password;
     }
     
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
     public Set<Game> getGames() {
         return games;
     }
     
     public void setGames(Set<Game> games) {
         this.games = games;
+    }
+
+    // Simple factory method for creating users
+    public static User createUser(String username, String email, String password) {
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(password);
+        return user;
     }
 }

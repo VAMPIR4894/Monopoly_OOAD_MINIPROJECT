@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.model.User;
-import com.example.demo.service.UserServiceProxy;
+import com.example.demo.service.AuthenticationProxy;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -20,7 +20,7 @@ import com.example.demo.service.UserServiceProxy;
 public class AuthRestController {
 
     @Autowired
-    private UserServiceProxy userServiceProxy;
+    private AuthenticationProxy authenticationProxy;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> userMap) {
@@ -33,8 +33,12 @@ public class AuthRestController {
         }
 
         try {
-            userServiceProxy.registerUser(username, password);
-            return ResponseEntity.ok("User registered successfully");
+            User user = authenticationProxy.register(username, password);
+            return ResponseEntity.ok(Map.of(
+                "message", "User registered successfully",
+                "userId", user.getId(),
+                "username", user.getUsername()
+            ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
@@ -52,7 +56,7 @@ public class AuthRestController {
         }
 
         try {
-            User user = userServiceProxy.loginUser(username, password, captchaToken, captchaInput);
+            User user = authenticationProxy.authenticateWithCaptcha(username, password, captchaToken, captchaInput);
             return ResponseEntity.ok(Map.of(
                 "message", "Login successful",
                 "userId", user.getId(),

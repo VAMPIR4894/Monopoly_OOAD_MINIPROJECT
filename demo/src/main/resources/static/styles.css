@@ -5,11 +5,6 @@ body {
 	min-width: 1075px;
 }
 
-body {
-	font-family: 'Press Start 2P', cursive;
-	font-size: 12px;
-}
-
 td {
 	font-size: 12px;
 	font-family: arial, sans-serif;
@@ -28,12 +23,7 @@ td {
 	background-color: #fafafa;
 	border-radius: 10px;
 	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-#setup, .player-input, #menu, #alert, #landed {
-	font-family: 'Press Start 2P', cursive;
-	font-size: 10px;
+	font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif
 }
 
 /* Heading and text */
@@ -333,7 +323,6 @@ td {
 	width: 290px;
 	height: 32px;
 	margin: 0px 10px;
-	background-color: #212121; /* Darker menu background */
 }
 
 #menutable {
@@ -534,6 +523,8 @@ td {
 #deed {
 	display: none;
 	position: fixed;
+	bottom: 10px;
+	right: 10px;
 	border: 2px solid #ccc; /* Lighter border */
 	width: 235px;
 	height: 275px;
@@ -1033,4 +1024,21 @@ input[type="button"]:hover {
 	100% { opacity: 0; }
 }
 
+.deed-popup {
+	position: absolute;
+	background-color: white;
+	color: black;
+	border: 2px solid #999;
+	padding: 8px;
+	font-size: 12px;
+	z-index: 10;
+	top: 100%; /* Show below the cell */
+	left: 0;
+	width: 150px;
+	box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+	border-radius: 4px;
+}
 
+.cell {
+	position: relative; /* Needed for .deed-popup positioning */
+}

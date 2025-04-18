@@ -1040,6 +1040,140 @@ function Game() {
 		popup("<p>Are you sure you want to resign?</p>", game.bankruptcy, "Yes/No");
 	};
 
+	this.bankrupt = function() {
+		popup("<p>Are you sure you want to declare bankruptcy?</p><p>You will be able to spectate the game but cannot play your turn.</p>", function() {
+			// Mark the current player as bankrupt
+			var p = player[turn];
+			p.bankrupt = true;
+			addAlert(p.name + " has declared bankruptcy and is now spectating.");
+			
+			// Update UI to show spectating status
+			document.getElementById("pname").innerHTML = p.name + " (Spectating)";
+			document.getElementById("nextbutton").disabled = true;
+			document.getElementById("nextbutton").title = "You are spectating and cannot play your turn.";
+			
+			// Hide the bankrupt button since player is already bankrupt
+			$("#bankruptbutton").hide();
+			
+			// Show the exit room button
+			$("#exitroombutton").show();
+			
+			// Count active players and their types
+			var activePlayers = 0;
+			var activeHumans = 0;
+			var activeAIs = 0;
+			var lastActivePlayer = null;
+			
+			for (var i = 1; i <= pcount; i++) {
+				if (!player[i].bankrupt) {
+					activePlayers++;
+					lastActivePlayer = player[i];
+					if (player[i].human) {
+						activeHumans++;
+					} else {
+						activeAIs++;
+					}
+				}
+			}
+			
+			// Check for game-ending conditions
+			var shouldEndGame = false;
+			var endGameReason = "";
+			
+			// Case 1: Only one player remains
+			if (activePlayers === 1) {
+				shouldEndGame = true;
+				endGameReason = "lastPlayer";
+			}
+			// Case 2: No humans left (AI-only game)
+			else if (activeHumans === 0) {
+				shouldEndGame = true;
+				endGameReason = "noHumans";
+			}
+			// Case 3: Current player is the last human and there are other players
+			else if (p.human && activeHumans === 0) {
+				shouldEndGame = true;
+				endGameReason = "lastHuman";
+			}
+			
+			if (shouldEndGame) {
+				// Game over - declare winner
+				$("#control").hide();
+				$("#board").hide();
+				$("#refresh").show();
+				
+				// Create winner announcement HTML
+				var winnerHTML = "<div style='text-align: center; padding: 20px;'>";
+				winnerHTML += "<h2 style='color: " + lastActivePlayer.color + ";'>🎉 Game Over! 🎉</h2>";
+				
+				switch(endGameReason) {
+					case "lastPlayer":
+						winnerHTML += "<h3>Winner: " + lastActivePlayer.name + "</h3>";
+						winnerHTML += "<p>Congratulations! You are the last player standing!</p>";
+						break;
+					case "noHumans":
+						winnerHTML += "<h3>Game Ended</h3>";
+						winnerHTML += "<p>All human players have left the game.</p>";
+						break;
+					case "lastHuman":
+						winnerHTML += "<h3>Game Ended</h3>";
+						winnerHTML += "<p>The last human player has left the game.</p>";
+						break;
+				}
+				
+				// Add final statistics
+				winnerHTML += "<div style='margin-top: 20px;'><h4>Final Statistics:</h4>";
+				winnerHTML += "<table style='width: 100%; margin-top: 10px;'>";
+				winnerHTML += "<tr><th>Player</th><th>Money</th><th>Properties</th><th>Status</th><th>Type</th></tr>";
+				
+				for (var i = 1; i <= pcount; i++) {
+					var currentPlayer = player[i];
+					var propertyCount = 0;
+					for (var j = 0; j < 40; j++) {
+						if (square[j].owner === i) {
+							propertyCount++;
+						}
+					}
+					
+					winnerHTML += "<tr style='color: " + currentPlayer.color + ";'>";
+					winnerHTML += "<td>" + currentPlayer.name + "</td>";
+					winnerHTML += "<td>$" + currentPlayer.money + "</td>";
+					winnerHTML += "<td>" + propertyCount + "</td>";
+					winnerHTML += "<td>" + (currentPlayer.bankrupt ? "Bankrupt" : "Active") + "</td>";
+					winnerHTML += "<td>" + (currentPlayer.human ? "Human" : "AI") + "</td>";
+					winnerHTML += "</tr>";
+				}
+				
+				winnerHTML += "</table></div>";
+				winnerHTML += "<p style='margin-top: 20px;'>Redirecting to home page in 5 seconds...</p>";
+				winnerHTML += "</div>";
+				
+				// Show the winner announcement
+				popup(winnerHTML);
+				
+				// Clear game state and redirect to home page after a delay
+				setTimeout(function() {
+					sessionStorage.removeItem("loggedIn");
+					window.location.href = "login_register.html";
+				}, 5000);
+				
+				return;
+			}
+			
+			// Continue the game for other players
+			game.next();
+		}, "Yes/No");
+	};
+
+	this.exitRoom = function() {
+		popup("<p>Are you sure you want to exit the room and return to the home page?</p>", function() {
+			// Clear game state
+			sessionStorage.removeItem("loggedIn");
+			// Redirect to home page
+			window.location.href = "login_register.html";
+		}, "Yes/No");
+	};
+
 	this.bankruptcy = function() {
 		var p = player[turn];
 		var pcredit = player[p.creditor];
@@ -1119,6 +1253,7 @@ function Player(name, color) {
 	this.chanceJailCard = false;
 	this.bidding = true;
 	this.human = true;
+	this.bankrupt = false;
 	// this.AI = null;
 
 	this.pay = function (amount, creditor) {
@@ -1373,6 +1508,11 @@ function updateMoney() {
 		document.getElementById("p" + i + "moneybar").style.border = "2px solid " + p_i.color;
 		document.getElementById("p" + i + "money").innerHTML = p_i.money;
 		document.getElementById("p" + i + "moneyname").innerHTML = p_i.name;
+		
+		// Add "(Spectating)" to bankrupt players in the money bar
+		if (p_i.bankrupt) {
+			document.getElementById("p" + i + "moneyname").innerHTML += " (Spectating)";
+		}
 	}
 
 	if (document.getElementById("landed").innerHTML === "") {
@@ -1381,14 +1521,26 @@ function updateMoney() {
 
 	document.getElementById("quickstats").style.borderColor = p.color;
 
+	// Group the action buttons together
 	if (p.money < 0) {
-		// document.getElementById("nextbutton").disabled = true;
 		$("#resignbutton").show();
 		$("#nextbutton").hide();
-	} else {
-		// document.getElementById("nextbutton").disabled = false;
+		$("#bankruptbutton").hide();
+		$("#exitroombutton").hide();
+	} else if (p.bankrupt) {
 		$("#resignbutton").hide();
 		$("#nextbutton").show();
+		$("#bankruptbutton").hide();
+		$("#exitroombutton").show();
+		document.getElementById("nextbutton").disabled = true;
+		document.getElementById("nextbutton").title = "You are spectating and cannot play your turn.";
+	} else {
+		$("#resignbutton").hide();
+		$("#nextbutton").show();
+		$("#bankruptbutton").show();
+		$("#exitroombutton").hide();
+		document.getElementById("nextbutton").disabled = false;
+		document.getElementById("nextbutton").title = "Roll the dice and move your token accordingly.";
 	}
 }
 
@@ -2023,13 +2175,19 @@ function buyHouse(index) {
 	var houseSum = 0;
 	var hotelSum = 0;
 
+	// Skip bankrupt players
+	if (p.bankrupt) {
+		addAlert(p.name + " is bankrupt and cannot play.");
+		play(); // Move to the next player
+		return;
+	}
+
 	if (p.money - sq.houseprice < 0) {
 		if (sq.house == 4) {
 			return false;
 		} else {
 			return false;
 		}
-
 	} else {
 		for (var i = 0; i < 40; i++) {
 			if (square[i].hotel === 1) {
@@ -2042,16 +2200,13 @@ function buyHouse(index) {
 		if (sq.house < 4) {
 			if (houseSum >= 32) {
 				return false;
-
 			} else {
 				sq.house++;
 				addAlert(p.name + " placed a house on " + sq.name + ".");
 			}
-
 		} else {
 			if (hotelSum >= 12) {
 				return;
-
 			} else {
 				sq.house = 5;
 				sq.hotel = 1;
@@ -2067,9 +2222,16 @@ function buyHouse(index) {
 }
 
 function sellHouse(index) {
-	sq = square[index];
-	p = player[sq.owner];
-
+	var sq = square[index];
+	var p = player[sq.owner];
+	
+	// Skip bankrupt players
+	if (p.bankrupt) {
+		addAlert(p.name + " is bankrupt and cannot play.");
+		play(); // Move to the next player
+		return;
+	}
+	
 	if (sq.hotel === 1) {
 		sq.hotel = 0;
 		sq.house = 4;
@@ -2215,6 +2377,14 @@ function hidedeed() {
 
 function buy() {
 	var p = player[turn];
+	
+	// Skip bankrupt players
+	if (p.bankrupt) {
+		addAlert(p.name + " is bankrupt and cannot play.");
+		play(); // Move to the next player
+		return;
+	}
+	
 	var property = square[p.position];
 	var cost = property.price;
 
@@ -2237,11 +2407,18 @@ function buy() {
 function mortgage(index) {
 	var sq = square[index];
 	var p = player[sq.owner];
+	
+	// Skip bankrupt players
+	if (p.bankrupt) {
+		addAlert(p.name + " is bankrupt and cannot play.");
+		play(); // Move to the next player
+		return;
+	}
 
 	if (sq.house > 0 || sq.hotel > 0 || sq.mortgage) {
 		return false;
 	}
-
+	
 	var mortgagePrice = Math.round(sq.price * 0.5);
 	var unmortgagePrice = Math.round(sq.price * 0.55);
 
@@ -2261,6 +2438,14 @@ function mortgage(index) {
 function unmortgage(index) {
 	var sq = square[index];
 	var p = player[sq.owner];
+	
+	// Skip bankrupt players
+	if (p.bankrupt) {
+		addAlert(p.name + " is bankrupt and cannot play.");
+		play(); // Move to the next player
+		return;
+	}
+	
 	var unmortgagePrice = Math.round(sq.price * 0.55);
 	var mortgagePrice = Math.round(sq.price * 0.5);
 
@@ -2278,11 +2463,18 @@ function unmortgage(index) {
 	return true;
 }
 
-
 function land(increasedRent) {
 	increasedRent = !!increasedRent; // Cast increasedRent to a boolean value. It is used for the ADVANCE TO THE NEAREST RAILROAD/UTILITY Chance cards.
 
 	var p = player[turn];
+	
+	// Skip bankrupt players
+	if (p.bankrupt) {
+		addAlert(p.name + " is bankrupt and cannot play.");
+		play(); // Move to the next player
+		return;
+	}
+	
 	var s = square[p.position];
 
 	var die1 = game.getDie(1);
@@ -2416,7 +2608,14 @@ function land(increasedRent) {
 
 function roll() {
 	var p = player[turn];
-
+	
+	// Skip bankrupt players
+	if (p.bankrupt) {
+		addAlert(p.name + " is bankrupt and cannot play.");
+		play(); // Move to the next player
+		return;
+	}
+	
 	$("#option").hide();
 	$("#buy").show();
 	$("#manage").hide();
@@ -2426,7 +2625,7 @@ function roll() {
 	}
 	document.getElementById("nextbutton").value = "End turn";
 	document.getElementById("nextbutton").title = "End turn and advance to the next player.";
-
+	
 	game.rollDice();
 	var die1 = game.getDie(1);
 	var die2 = game.getDie(2);
@@ -2543,6 +2742,14 @@ function play() {
 	}
 
 	var p = player[turn];
+	
+	// Skip bankrupt players
+	if (p.bankrupt) {
+		addAlert(p.name + " is bankrupt and cannot play.");
+		play(); // Recursively call play to move to the next player
+		return;
+	}
+	
 	game.resetDice();
 
 	document.getElementById("pname").innerHTML = p.name;
@@ -2702,6 +2909,30 @@ function menuitem_onmouseout(element) {
 	return;
 }
 
+function showdeed(index) {
+	const sq = square[index];
+	if (!sq) return;
+
+	$("#deed-name").text(sq.name);
+	$("#deed-baserent").text("$" + sq.baserent);
+	$("#deed-rent1").text("$" + sq.rent1);
+	$("#deed-rent2").text("$" + sq.rent2);
+	$("#deed-rent3").text("$" + sq.rent3);
+	$("#deed-rent4").text("$" + sq.rent4);
+	$("#deed-rent5").text("$" + sq.rent5);
+	$("#deed-mortgage").text("$" + Math.floor(sq.price / 2));
+	$("#deed-houseprice").text("$" + sq.houseprice);
+	$("#deed-hotelprice").text("$" + sq.houseprice);
+
+	$("#deed-normal").show();
+	$("#deed-special, #deed-mortgaged").hide();
+	$("#deed").show();
+}
+
+function hidedeed() {
+	$("#deed").hide();
+}
+
 window.onload = function() {
 	game = new Game();
 
@@ -2832,25 +3063,25 @@ window.onload = function() {
 
 	// Create event handlers for hovering and draging.
 
-	var drag, dragX, dragY, dragObj, dragTop, dragLeft;
+	// var drag, dragX, dragY, dragObj, dragTop, dragLeft;
 
-	$(".cell-position-holder, #jail").on("mouseover", function(){
-		$("#" + this.enlargeId).show();
+	// $(".cell-position-holder, #jail").on("mouseover", function(){
+	// 	$("#" + this.enlargeId).show();
 
-	}).on("mouseout", function() {
-		$("#" + this.enlargeId).hide();
+	// }).on("mouseout", function() {
+	// 	$("#" + this.enlargeId).hide();
 
-	}).on("mousemove", function(e) {
-		var element = document.getElementById(this.enlargeId);
+	// }).on("mousemove", function(e) {
+	// 	var element = document.getElementById(this.enlargeId);
 
-		if (e.clientY + 20 > window.innerHeight - 204) {
-			element.style.top = (window.innerHeight - 204) + "px";
-		} else {
-			element.style.top = (e.clientY + 20) + "px";
-		}
+	// 	if (e.clientY + 20 > window.innerHeight - 204) {
+	// 		element.style.top = (window.innerHeight - 204) + "px";
+	// 	} else {
+	// 		element.style.top = (e.clientY + 20) + "px";
+	// 	}
 
-		element.style.left = (e.clientX + 10) + "px";
-	});
+	// 	element.style.left = (e.clientX + 10) + "px";
+	// });
 
 
 	$("body").on("mousemove", function(e) {
@@ -3008,5 +3239,14 @@ window.onload = function() {
 
 	$("#trade-menu-item").click(game.trade);
 
-
+	$(document).ready(function () {
+		// Attach hover handlers to each cell
+		for (let i = 0; i < square.length; i++) {
+			const cell = document.getElementById("cell" + i);
+			if (cell) {
+				cell.onmouseover = () => showdeed(i);
+				cell.onmouseout = hidedeed;
+			}
+		}
+	});
 };
